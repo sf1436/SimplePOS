@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { NetworkDataPoint } from '../hooks/useSystemData';
 import { Wifi } from 'lucide-react';
 
@@ -10,6 +9,43 @@ interface NetworkChartProps {
 }
 
 export default function NetworkChart({ data, download, upload }: NetworkChartProps) {
+  const width = 600;
+  const height = 200;
+  const padding = 40;
+
+  const allValues = data.flatMap(d => [d.download, d.upload]);
+  const maxValue = Math.max(...allValues, 100);
+
+  const downloadPoints = data.map((point, index) => {
+    const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+    const y = height - padding - ((point.download / maxValue) * (height - padding * 2));
+    return { x, y };
+  });
+
+  const uploadPoints = data.map((point, index) => {
+    const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+    const y = height - padding - ((point.upload / maxValue) * (height - padding * 2));
+    return { x, y };
+  });
+
+  const createSmoothPath = (points: { x: number; y: number }[]) => {
+    return points.map((point, index) => {
+      if (index === 0) return `M ${point.x} ${point.y}`;
+      const prev = points[index - 1];
+      const cp1x = prev.x + (point.x - prev.x) / 3;
+      const cp1y = prev.y;
+      const cp2x = point.x - (point.x - prev.x) / 3;
+      const cp2y = point.y;
+      return `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${point.x} ${point.y}`;
+    }).join(' ');
+  };
+
+  const downloadPathD = createSmoothPath(downloadPoints);
+  const uploadPathD = createSmoothPath(uploadPoints);
+
+  const downloadAreaD = downloadPathD + ` L ${downloadPoints[downloadPoints.length - 1].x} ${height - padding} L ${downloadPoints[0].x} ${height - padding} Z`;
+  const uploadAreaD = uploadPathD + ` L ${uploadPoints[uploadPoints.length - 1].x} ${height - padding} L ${uploadPoints[0].x} ${height - padding} Z`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -23,53 +59,89 @@ export default function NetworkChart({ data, download, upload }: NetworkChartPro
           <h3 className="text-white font-semibold">網路流量</h3>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="text-cyan-400">↓ {download.toFixed(0)} MB/s</span>
-          <span className="text-orange-400">↑ {upload.toFixed(0)} MB/s</span>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-1 bg-cyan-400 rounded" />
+            <span className="text-cyan-400">↓ {download.toFixed(0)} MB/s</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-1 bg-orange-400 rounded" />
+            <span className="text-orange-400">↑ {upload.toFixed(0)} MB/s</span>
+          </div>
         </div>
       </div>
 
-      <div className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-            <defs>
-              <linearGradient id="downloadGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="uploadGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f97316" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="time" stroke="#6b7280" fontSize={10} />
-            <YAxis stroke="#6b7280" fontSize={10} />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-              labelStyle={{ color: '#9ca3af' }}
-              formatter={(value: number) => [`${value.toFixed(1)} MB/s`, '']}
-            />
-            <Legend wrapperStyle={{ fontSize: '11px' }} />
-            <Area
-              type="monotone"
-              dataKey="download"
-              name="下載"
-              stroke="#06b6d4"
-              strokeWidth={2}
-              fill="url(#downloadGradient)"
-              animationDuration={300}
-            />
-            <Area
-              type="monotone"
-              dataKey="upload"
-              name="上傳"
-              stroke="#f97316"
-              strokeWidth={2}
-              fill="url(#uploadGradient)"
-              animationDuration={300}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      <div className="w-full overflow-hidden">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
+          <defs>
+            <linearGradient id="downloadGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id="uploadGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#f97316" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#f97316" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          {[0, 25, 50, 75, 100].map((value) => {
+            const y = height - padding - (value / 100) * (height - padding * 2);
+            const label = `${((value / 100) * maxValue).toFixed(0)}`;
+            return (
+              <g key={value}>
+                <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#374151" strokeDasharray="3 3" />
+                <text x={padding - 5} y={y + 4} textAnchor="end" fill="#6b7280" fontSize="10">{label}</text>
+              </g>
+            );
+          })}
+
+          {/* Download area */}
+          <motion.path
+            d={downloadAreaD}
+            fill="url(#downloadGradient)"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          />
+          <motion.path
+            d={downloadPathD}
+            fill="none"
+            stroke="#06b6d4"
+            strokeWidth="2"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1 }}
+          />
+
+          {/* Upload area */}
+          <motion.path
+            d={uploadAreaD}
+            fill="url(#uploadGradient)"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          />
+          <motion.path
+            d={uploadPathD}
+            fill="none"
+            stroke="#f97316"
+            strokeWidth="2"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1 }}
+          />
+
+          {/* Time labels */}
+          {data.filter((_, i) => i % 5 === 0).map((point, index) => {
+            const dataIndex = data.indexOf(point);
+            const x = padding + (dataIndex / (data.length - 1)) * (width - padding * 2);
+            return (
+              <text key={index} x={x} y={height - 10} textAnchor="middle" fill="#6b7280" fontSize="10">
+                {point.time}
+              </text>
+            );
+          })}
+        </svg>
       </div>
     </motion.div>
   );

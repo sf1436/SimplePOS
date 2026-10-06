@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { CpuDataPoint } from '../hooks/useSystemData';
 import { Cpu } from 'lucide-react';
 
@@ -16,6 +15,30 @@ export default function CpuChart({ data, currentUsage }: CpuChartProps) {
   };
 
   const colors = getColor();
+  const width = 600;
+  const height = 200;
+  const padding = 40;
+
+  const maxUsage = 100;
+  const minUsage = 0;
+
+  const points = data.map((point, index) => {
+    const x = padding + (index / (data.length - 1)) * (width - padding * 2);
+    const y = height - padding - ((point.usage - minUsage) / (maxUsage - minUsage)) * (height - padding * 2);
+    return { x, y, ...point };
+  });
+
+  const pathD = points.map((point, index) => {
+    if (index === 0) return `M ${point.x} ${point.y}`;
+    const prev = points[index - 1];
+    const cp1x = prev.x + (point.x - prev.x) / 3;
+    const cp1y = prev.y;
+    const cp2x = point.x - (point.x - prev.x) / 3;
+    const cp2y = point.y;
+    return `C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${point.x} ${point.y}`;
+  }).join(' ');
+
+  const areaD = pathD + ` L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`;
 
   return (
     <motion.div
@@ -36,33 +59,57 @@ export default function CpuChart({ data, currentUsage }: CpuChartProps) {
         </div>
       </div>
 
-      <div className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-            <defs>
-              <linearGradient id="cpuGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={colors.stroke} stopOpacity={0.3} />
-                <stop offset="95%" stopColor={colors.stroke} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="time" stroke="#6b7280" fontSize={10} />
-            <YAxis stroke="#6b7280" fontSize={10} domain={[0, 100]} />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151', borderRadius: '8px' }}
-              labelStyle={{ color: '#9ca3af' }}
-              itemStyle={{ color: colors.stroke }}
-            />
-            <Area
-              type="monotone"
-              dataKey="usage"
-              stroke={colors.stroke}
-              strokeWidth={2}
-              fill="url(#cpuGradient)"
-              animationDuration={300}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+      <div className="w-full overflow-hidden">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48">
+          <defs>
+            <linearGradient id="cpuGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={colors.stroke} stopOpacity="0.3" />
+              <stop offset="100%" stopColor={colors.stroke} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Grid lines */}
+          {[0, 25, 50, 75, 100].map((value) => {
+            const y = height - padding - (value / 100) * (height - padding * 2);
+            return (
+              <g key={value}>
+                <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#374151" strokeDasharray="3 3" />
+                <text x={padding - 5} y={y + 4} textAnchor="end" fill="#6b7280" fontSize="10">{value}</text>
+              </g>
+            );
+          })}
+
+          {/* Area */}
+          <motion.path
+            d={areaD}
+            fill="url(#cpuGradient)"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          />
+
+          {/* Line */}
+          <motion.path
+            d={pathD}
+            fill="none"
+            stroke={colors.stroke}
+            strokeWidth="2"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1 }}
+          />
+
+          {/* Time labels */}
+          {data.filter((_, i) => i % 5 === 0).map((point, index) => {
+            const dataIndex = data.indexOf(point);
+            const x = padding + (dataIndex / (data.length - 1)) * (width - padding * 2);
+            return (
+              <text key={index} x={x} y={height - 10} textAnchor="middle" fill="#6b7280" fontSize="10">
+                {point.time}
+              </text>
+            );
+          })}
+        </svg>
       </div>
     </motion.div>
   );
