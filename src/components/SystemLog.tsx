@@ -32,7 +32,7 @@ export default function SystemLog({ logs }: SystemLogProps) {
         </div>
       </div>
 
-      <div className="space-y-1.5 max-h-72 overflow-y-auto pr-2 scrollbar-thin">
+      <div className="space-y-1 max-h-60 sm:max-h-72 overflow-y-auto pr-1 sm:pr-2 scrollbar-thin">
         {logs.map((log, index) => {
           const config = levelConfig[log.level];
           return (

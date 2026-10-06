@@ -9,6 +9,7 @@ import DiskInfo from './components/DiskInfo';
 import ProcessList from './components/ProcessList';
 import SystemLog from './components/SystemLog';
 import CircularGauge from './components/CircularGauge';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 export default function App() {
   const data = useSystemData();
@@ -28,11 +29,12 @@ export default function App() {
       </div>
 
       <div className="relative z-10">
+        <PWAInstallPrompt />
         <Header uptime={data.uptime} />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
           {/* Stat Cards Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-4">
             <StatCard
               title="CPU"
               value={`${data.cpu.toFixed(1)}%`}
@@ -88,7 +90,7 @@ export default function App() {
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
             <CpuChart data={data.cpuHistory} currentUsage={data.cpu} />
             <MemoryChart
               data={data.memoryHistory}
@@ -111,14 +113,14 @@ export default function App() {
                 <Thermometer className="w-5 h-5 text-orange-400" />
                 系統健康度
               </h3>
-              <div className="grid grid-cols-2 gap-4 place-items-center">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 place-items-center">
                 <CircularGauge
                   value={data.cpu}
                   max={100}
                   label="CPU 負載"
                   unit="%"
                   color={data.cpu > 80 ? 'red' : data.cpu > 60 ? 'orange' : 'emerald'}
-                  size={100}
+                  size={90}
                 />
                 <CircularGauge
                   value={(data.memory.used / data.memory.total) * 100}
@@ -126,7 +128,7 @@ export default function App() {
                   label="記憶體"
                   unit="%"
                   color="blue"
-                  size={100}
+                  size={90}
                 />
                 <CircularGauge
                   value={data.temperature}
@@ -134,7 +136,7 @@ export default function App() {
                   label="溫度"
                   unit="°C"
                   color={data.temperature > 70 ? 'red' : 'orange'}
-                  size={100}
+                  size={90}
                 />
                 <CircularGauge
                   value={(data.disk.used / data.disk.total) * 100}
@@ -142,7 +144,7 @@ export default function App() {
                   label="磁碟"
                   unit="%"
                   color="purple"
-                  size={100}
+                  size={90}
                 />
               </div>
             </div>

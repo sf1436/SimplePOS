@@ -1,0 +1,20 @@
+{
+  "name": "系統監控儀表板",
+  "short_name": "系統監控",
+  "description": "即時監控 CPU、記憶體、網路、磁碟等系統資源",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030712",
+  "theme_color": "#10b981",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["utilities", "productivity"],
+  "lang": "zh-TW"
+}

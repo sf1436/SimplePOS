@@ -38,10 +38,10 @@ export default function StatCard({ title, value, subtitle, icon: Icon, color, pr
       </div>
 
       <div className="mb-2">
-        <span className={`text-2xl font-bold ${colors.text}`}>{value}</span>
+        <span className={`text-xl sm:text-2xl font-bold ${colors.text}`}>{value}</span>
       </div>
 
-      <p className="text-xs text-gray-400 mb-3">{subtitle}</p>
+      <p className="text-[10px] sm:text-xs text-gray-400 mb-3 truncate">{subtitle}</p>
 
       {progress !== undefined && (
         <div className="relative">

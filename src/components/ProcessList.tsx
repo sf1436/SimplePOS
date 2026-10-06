@@ -42,8 +42,8 @@ export default function ProcessList({ processes }: ProcessListProps) {
         </span>
       </div>
 
-      <div className="overflow-hidden rounded-lg">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg -mx-1">
+        <table className="w-full text-xs sm:text-sm min-w-[400px]">
           <thead>
             <tr className="text-gray-400 text-xs border-b border-gray-700/50">
               <th className="text-left py-2 px-2 font-medium">名稱</th>
