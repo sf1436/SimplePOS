@@ -1,4 +1,5 @@
-import { Cpu, MemoryStick, HardDrive, Wifi, Thermometer, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Cpu, MemoryStick, HardDrive, Wifi, Thermometer, Clock, Package } from 'lucide-react';
 import { useSystemData } from './hooks/useSystemData';
 import Header from './components/Header';
 import StatCard from './components/StatCard';
@@ -10,8 +11,11 @@ import ProcessList from './components/ProcessList';
 import SystemLog from './components/SystemLog';
 import CircularGauge from './components/CircularGauge';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import BuildGuide from './components/BuildGuide';
+import { AnimatePresence } from 'framer-motion';
 
 export default function App() {
+  const [showBuildGuide, setShowBuildGuide] = useState(false);
   const data = useSystemData();
 
   const memoryUsedGB = (data.memory.used / 1024).toFixed(1);
@@ -163,6 +167,21 @@ export default function App() {
             </p>
           </footer>
         </main>
+
+        {/* Floating Build Guide Button */}
+        <button
+          onClick={() => setShowBuildGuide(true)}
+          className="fixed bottom-6 right-6 z-40 flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-4 py-3 rounded-full shadow-lg shadow-emerald-500/20 transition-all duration-300 hover:scale-105"
+          title="查看打包步驟"
+        >
+          <Package className="w-5 h-5" />
+          <span className="text-sm font-medium hidden sm:inline">打包步驟</span>
+        </button>
+
+        {/* Build Guide Modal */}
+        <AnimatePresence>
+          {showBuildGuide && <BuildGuide onClose={() => setShowBuildGuide(false)} />}
+        </AnimatePresence>
       </div>
     </div>
   );
